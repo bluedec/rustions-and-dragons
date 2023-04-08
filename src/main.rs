@@ -42,10 +42,11 @@ fn main() {
     println!("{}", dragon);
     let mut stdout = stdout();
     println!("\n<<<0/ O \\0>>>Welcome to Rustions and Dragons");        
-    println!("1) Start");
+    println!(") Start");
+    println!(") Quit");
     execute!(stdout, Hide).unwrap();
     stdout.queue(cursor::MoveTo(65, 28)).unwrap();
-    
+     
     execute!(stdout, Clear(ClearType::CurrentLine)).unwrap();
     println!("Your cursor here.");
     stdout.flush();
