@@ -44,6 +44,7 @@ fn main() {
     println!("\n<<<0/ O \\0>>>Welcome to Rustions and Dragons");        
     println!(") Start");
     println!(") Quit");
+    println!("");
     execute!(stdout, Hide).unwrap();
     stdout.queue(cursor::MoveTo(65, 28)).unwrap();
      
