@@ -5,6 +5,7 @@ use std::io::{Write, stdout, stdin};
 use crossterm::{
     event, QueueableCommand, cursor, ExecutableCommand, queue
 };
+use crossterm::terminal;
 use crossterm::cursor::{ Show, Hide };
 use crossterm::{ execute, terminal::{ Clear, ClearType } };
 
@@ -47,10 +48,11 @@ fn main() {
     println!("");
     execute!(stdout, Hide).unwrap();
     stdout.queue(cursor::MoveTo(65, 28)).unwrap();
-     
+    execute!(stdout, Clear(ClearType::All), cursor::Hide).unwrap(); 
     execute!(stdout, Clear(ClearType::CurrentLine)).unwrap();
+    execute!(stdout, terminal::SetSize(80, 80)).unwrap();
     println!("Your cursor here.");
-    stdout.flush();
+    stdout.flush().unwrap();
 }
 
 
