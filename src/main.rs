@@ -1,7 +1,10 @@
+use std::sync::mpsc;
 use std::thread;
 use std::time::Duration; 
+use std::io;
 use magic::Class;
 use std::io::{Write, stdout, stdin};
+use crossterm::event::Event;
 use crossterm::{
     event, QueueableCommand, cursor, ExecutableCommand, queue
 };
@@ -18,7 +21,12 @@ pub fn take_inp() -> String {
     input2.trim().to_lowercase().to_string()
 }
 
+
 fn main() {
+    let mut stdout = stdout();
+    execute!(stdout, Hide).unwrap();
+    execute!(stdout, Clear(ClearType::All)).unwrap(); 
+    execute!(stdout, Clear(ClearType::CurrentLine)).unwrap();
     let dragon = "                                                                      
                                  d$                                          
                                .$$F                                          
@@ -41,17 +49,67 @@ fn main() {
                              *$$$$$$$$$$$$$$$\"                               
                                   \"\"\"\"\"\"\"\"\"       Gilo94'";
     println!("{}", dragon);
-    let mut stdout = stdout();
-    println!("\n<<<0/ O \\0>>>Welcome to Rustions and Dragons");        
-    println!(") Start");
-    println!(") Quit");
-    println!("");
-    execute!(stdout, Hide).unwrap();
-    stdout.queue(cursor::MoveTo(65, 28)).unwrap();
-    execute!(stdout, Clear(ClearType::All), cursor::Hide).unwrap(); 
-    execute!(stdout, Clear(ClearType::CurrentLine)).unwrap();
-    execute!(stdout, terminal::SetSize(80, 80)).unwrap();
-    println!("Your cursor here.");
+    println!("\nWelcome to Rustions and Dragons");        
+
+    let mut options: Vec<&str> = vec![") Start", ") Quit"];
+    let mut selected_option: i32 = 0;
+    let max_option_range = options.len() - 1;
+    // transmiter for input
+    let (tx, rx): (mpsc::Sender<bool>, mpsc::Receiver<bool>)      = mpsc::channel();
+    
+    pub fn show_options(options: &Vec<&str>, selected_option: i32) {
+        for (i, option) in options.iter().enumerate() {
+            if i == selected_option.try_into().unwrap() {
+                println!("{} <", option)
+            } else {
+                println!("{}", option);
+
+            }
+        }
+    }
+    show_options(&options, selected_option);
+
+    // thread made to receive input 
+    let input_thread = thread::spawn(move || {
+        // raw mode for receive instantly the user input
+        loop {
+            println!("Waiting for input.");
+            let event = event::read().unwrap();
+            if event == Event::Key(event::KeyCode::Up.into()) {
+                if selected_option > 0 {
+                    tx.send(true).unwrap();
+                    break
+                }
+            }
+            if event == Event::Key(event::KeyCode::Down.into()) {
+                if selected_option < max_option_range.try_into().unwrap() {
+                    tx.send(false).unwrap();
+                }
+            }
+            if event == Event::Key(event::KeyCode::Esc.into()) {
+                break
+            }
+        }
+        terminal::disable_raw_mode().unwrap();
+    }).join();
+
+    let data = rx.recv().unwrap();
+    if data == true {
+        selected_option -= 1;
+    } else {
+        selected_option += 1;
+    }
+    for (i, option) in options.iter().enumerate() {
+        if i == selected_option.try_into().unwrap() {
+            println!("{} <", option);
+        } else {
+            println!("{}", option);
+        }
+    }
+    println!("{:?}", data);
+
+
+
     stdout.flush().unwrap();
 }
 
