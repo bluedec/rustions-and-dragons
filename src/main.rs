@@ -5,11 +5,10 @@ use std::sync::{ Arc, Mutex };
 
 use std::sync::mpsc;
 
-use crossterm::event::Event;
-use crossterm::{ event, cursor, terminal, execute };
+use crossterm::{ cursor, execute };
 use crossterm::terminal::{ enable_raw_mode, disable_raw_mode, Clear, ClearType };
 
-use magic::{ wait_a_sec, Choice };
+use magic::{ Choice };
 use magic::{ zone, Wing};
 
 
@@ -29,7 +28,6 @@ fn main() -> io::Result<()> {
     enable_raw_mode()?;
 
     let options: Vec<&str> = vec![") Start", ") Quit"];
-    let mut selected_option: i32 = 0;
 
     'master: loop {
         // transmiter for input
@@ -44,24 +42,24 @@ fn main() -> io::Result<()> {
 
         match data {
             Choice::Go => println!("Go!"),
-            Choice::Next => selected_option -= 1,
-            Choice::Prev => selected_option += 1,
+            Choice::Next => println!("+1?"),
+            Choice::Prev => println!("-1?"),
             Choice::Break => break 'master
 
         }
     }
-    println!("Disabling Raw Mode\r");
 
     execute!(stdout, cursor::Show)?;
+    println!("Disabling Raw Mode\r");
     stdout.flush().unwrap();
-
     disable_raw_mode()
+
 }
 
 
-fn find_wing() {
+fn _find_wing() {
     println!("I'm trying to give you a wing here...");
-    let win = Wing {
+    let _win = Wing {
         name: String::from("WIN"),
         weight: 6,
         habilities: vec![String::from("Gust"), String::from("Heal")],

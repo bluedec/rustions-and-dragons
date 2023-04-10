@@ -7,7 +7,7 @@ use std::sync::{ Arc, Mutex };
 
 use crossterm::event::Event;
 use crossterm::{ event, cursor, terminal, execute };
-use crossterm::terminal::{ enable_raw_mode, disable_raw_mode, Clear, ClearType };
+use crossterm::terminal::{ Clear, ClearType };
 
 pub enum Choice {
     Go,
