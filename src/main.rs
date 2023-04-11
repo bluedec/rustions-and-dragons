@@ -1,53 +1,171 @@
 use std::io;
 use std::io::{ Write, stdout };
 
-use std::sync::{ Arc, Mutex };
-
-use std::sync::mpsc;
-
 use crossterm::{ cursor, execute };
+use crossterm::terminal;
 use crossterm::terminal::{ enable_raw_mode, disable_raw_mode, Clear, ClearType };
+use crossterm::event;
+use crossterm::event::Event;
 
-use magic::{ Choice };
-use magic::{ zone, Wing};
-
+use magic::{ clean, Choice };
+use magic::{ zone, Zone, Wing};
 
 
 fn main() -> io::Result<()> {
-    let mut stdout = stdout();
-    pub fn clean(stdout: &mut io::Stdout) {
-        execute!(
-            stdout,
-            cursor::Hide,
-            cursor::MoveTo(0, 0),
-            Clear(ClearType::All),
-            ).unwrap();
-    }
-    clean(&mut stdout);
-    println!("Enabling Raw Mode\r");
     enable_raw_mode()?;
+    let mut main_menu: Vec<Zone> = Vec::new();
+    let start = Zone {
+        title: "Rustions and Dragons",
+        options: vec![") Start", ") Quit"],
+    };
+    let new_ran = Zone {
+        title: "New Run",
+        options: vec![") New Run", ") Return"],   
+    };
+    let choose_race = Zone {
+        title: "Choose Race",
+        options: vec![") Humans", ") Locked", ") Locked"],   
 
-    let options: Vec<&str> = vec![") Start", ") Quit"];
-
-    'master: loop {
-        // transmiter for input
-        let (tx, rx): (mpsc::Sender<Choice>, mpsc::Receiver<Choice>) = mpsc::channel();
-
-        let tx_arc: Arc<Mutex<mpsc::Sender<Choice>>> = Arc::new(Mutex::new(tx));
-        let tx_arc_clone = tx_arc.clone();
+    };
+    
+    let name = Zone {
+        title: "Name yourself.",
+        options: vec![],
         
-        zone(&options, 0, "Main Menu", &tx_arc_clone); 
+    };
+    
+    main_menu.insert(0, start);
+    main_menu.insert(0, new_ran);
+    main_menu.insert(0, choose_race);
+    
+    let mut stdout = stdout();
+    clean(&mut stdout);
 
-        let data = rx.recv().unwrap();
+   start_quit(&mut stdout); 
+     
+    pub fn start_quit(stdout: &mut io::Stdout) {
+        let options = vec![") Start", ") Quit"];
+        let mut current_option = 0;
+        let n = options.len() + 1; 
+        loop {
+            println!(" Main Menu\r");
 
-        match data {
-            Choice::Go => println!("Go!"),
-            Choice::Next => println!("+1?"),
-            Choice::Prev => println!("-1?"),
-            Choice::Break => break 'master
-
+            for (i, option) in options.iter().enumerate() {
+                if i == current_option as usize {
+                    println!("{} <\r", option)
+                } else {
+                    println!("{}\r", option);
+                }
+            }
+            let input = event::read().unwrap();
+            
+            //make a function that handles this two cases, Up and Down.
+            if input == Event::Key(event::KeyCode::Up.into()) {
+                execute!(stdout, Clear(ClearType::All), cursor::MoveUp(n as u16)).unwrap();
+                if current_option > 0 {
+                    current_option -= 1;
+                    continue
+                }
+            }
+            if input == Event::Key(event::KeyCode::Down.into()) {
+                execute!(stdout, Clear(ClearType::All), cursor::MoveUp(n as u16)).unwrap();
+                if current_option < options.len() - 1 {
+                    current_option += 1;
+                    continue
+                }
+            }
+            if input == Event::Key(event::KeyCode::Enter.into()) {
+                execute!(stdout, Clear(ClearType::All), cursor::MoveUp(n as u16)).unwrap();
+                if current_option == 0 {
+                    new_run(stdout);
+                }
+                if current_option == 1 {
+                    println!("Game should stop here.");
+                    break
+                }
+            }
+            execute!(stdout, Clear(ClearType::All), cursor::MoveUp(n as u16)).unwrap();
         }
     }
+
+    pub fn new_run(stdout: &mut io::Stdout) {
+        let options = vec![") New Run", ") Return"];
+        let mut current_option = 0;
+        let n = options.len() + 1;
+        loop {
+            execute!(stdout, Clear(ClearType::All), cursor::MoveUp(n as u16)).unwrap();
+            println!(" New Run\r");
+
+            for (i, option) in options.iter().enumerate() {
+                if i == current_option as usize {
+                    println!("{} <\r", option)
+                } else {
+                    println!("{}\r", option);
+                }
+            }
+            let input = event::read().unwrap();
+
+            match read_up_or_down(stdout, &input, current_option, n) {
+                Choice::Go => println!("Lol\r"),
+                Choice::Next => {
+                    current_option += 1;
+                    continue
+                },
+                Choice::Prev => {
+                    current_option -= 1;
+                    continue
+                },
+                Choice::Back => {
+                    start_quit(stdout);
+                },
+                Choice::Break => {},
+                Choice::Other => {},
+            };
+            
+            pub fn read_up_or_down(stdout: &mut io::Stdout, input: &Event, current_option: i32, n: usize) -> Choice {
+                if input == &Event::Key(event::KeyCode::Up.into()) {
+                    execute!(stdout, Clear(ClearType::All), cursor::MoveUp(n as u16)).unwrap();
+                    if current_option > 0 {
+                        return Choice::Prev
+                    }
+                }
+                if input == &Event::Key(event::KeyCode::Down.into()) {
+                    execute!(stdout, Clear(ClearType::All), cursor::MoveUp(n as u16)).unwrap();
+                    if current_option < n as i32 {
+                        return Choice::Next
+                    }
+                }
+                Choice::Other
+            }
+            if input == Event::Key(event::KeyCode::Up.into()) {
+                execute!(stdout, Clear(ClearType::All), cursor::MoveUp(n as u16)).unwrap();
+                if current_option > 0 {
+                    current_option -= 1;
+                    continue
+                }
+            }
+            if input == Event::Key(event::KeyCode::Down.into()) {
+                execute!(stdout, Clear(ClearType::All), cursor::MoveUp(n as u16)).unwrap();
+                if current_option < n as i32 {
+                    current_option += 1;
+                    continue
+                }
+            }
+            if input == Event::Key(event::KeyCode::Enter.into()) {
+                execute!(stdout, Clear(ClearType::All), cursor::MoveUp(n as u16)).unwrap();
+                if current_option == 0 {
+                    println!("Nothing Yet!\r");
+                }
+                if current_option == 1 {
+                    start_quit(stdout);
+                }
+
+            }
+            execute!(stdout, Clear(ClearType::All), cursor::MoveUp(n as u16)).unwrap();
+        }
+
+    }
+    
 
     execute!(stdout, cursor::Show)?;
     println!("Disabling Raw Mode\r");
