@@ -8,7 +8,8 @@ use crossterm::event;
 use crossterm::event::Event;
 
 use magic::{ clean, Choice };
-use magic::{ zone, Zone, Wing};
+use magic::{ Zone, Wing};
+use magic::{ read_up_or_down, close };
 
 
 fn main() -> io::Result<()> {
@@ -27,27 +28,27 @@ fn main() -> io::Result<()> {
         options: vec![") Humans", ") Locked", ") Locked"],   
 
     };
-    
     let name = Zone {
         title: "Name yourself.",
         options: vec![],
-        
     };
     
     main_menu.insert(0, start);
     main_menu.insert(0, new_ran);
     main_menu.insert(0, choose_race);
-    
+     
     let mut stdout = stdout();
     clean(&mut stdout);
 
-   start_quit(&mut stdout); 
+    start_quit(&mut stdout); 
      
     pub fn start_quit(stdout: &mut io::Stdout) {
         let options = vec![") Start", ") Quit"];
         let mut current_option = 0;
         let n = options.len() + 1; 
         loop {
+
+            println!("{}", current_option);
             println!(" Main Menu\r");
 
             for (i, option) in options.iter().enumerate() {
@@ -59,7 +60,7 @@ fn main() -> io::Result<()> {
             }
             let input = event::read().unwrap();
             
-            //make a function that handles this two cases, Up and Down.
+            // make a function that handles this two cases, Up and Down.
             if input == Event::Key(event::KeyCode::Up.into()) {
                 execute!(stdout, Clear(ClearType::All), cursor::MoveUp(n as u16)).unwrap();
                 if current_option > 0 {
@@ -80,8 +81,7 @@ fn main() -> io::Result<()> {
                     new_run(stdout);
                 }
                 if current_option == 1 {
-                    println!("Game should stop here.");
-                    break
+                    break 
                 }
             }
             execute!(stdout, Clear(ClearType::All), cursor::MoveUp(n as u16)).unwrap();
@@ -91,9 +91,10 @@ fn main() -> io::Result<()> {
     pub fn new_run(stdout: &mut io::Stdout) {
         let options = vec![") New Run", ") Return"];
         let mut current_option = 0;
-        let n = options.len() + 1;
+        let n = options.len();
         loop {
             execute!(stdout, Clear(ClearType::All), cursor::MoveUp(n as u16)).unwrap();
+            println!("{}", current_option);
             println!(" New Run\r");
 
             for (i, option) in options.iter().enumerate() {
@@ -105,38 +106,22 @@ fn main() -> io::Result<()> {
             }
             let input = event::read().unwrap();
 
-            match read_up_or_down(stdout, &input, current_option, n) {
-                Choice::Go => println!("Lol\r"),
-                Choice::Next => {
-                    current_option += 1;
-                    continue
-                },
-                Choice::Prev => {
-                    current_option -= 1;
-                    continue
-                },
-                Choice::Back => {
-                    start_quit(stdout);
-                },
-                Choice::Break => {},
-                Choice::Other => {},
-            };
+ //           match read_up_or_down(stdout, &input, current_option, n) {
+ //               Choice::Go => println!("Lol\r"),
+ //               Choice::Next => {
+ //                   current_option += 1;
+ //                   continue
+ //               },
+ //               Choice::Prev => {
+ //                   current_option -= 1;
+ //                   continue
+ //               },
+ //               Choice::Back => {
+ //                   start_quit(stdout);
+ //               },
+ //               Choice::Other => {},
+ //           };
             
-            pub fn read_up_or_down(stdout: &mut io::Stdout, input: &Event, current_option: i32, n: usize) -> Choice {
-                if input == &Event::Key(event::KeyCode::Up.into()) {
-                    execute!(stdout, Clear(ClearType::All), cursor::MoveUp(n as u16)).unwrap();
-                    if current_option > 0 {
-                        return Choice::Prev
-                    }
-                }
-                if input == &Event::Key(event::KeyCode::Down.into()) {
-                    execute!(stdout, Clear(ClearType::All), cursor::MoveUp(n as u16)).unwrap();
-                    if current_option < n as i32 {
-                        return Choice::Next
-                    }
-                }
-                Choice::Other
-            }
             if input == Event::Key(event::KeyCode::Up.into()) {
                 execute!(stdout, Clear(ClearType::All), cursor::MoveUp(n as u16)).unwrap();
                 if current_option > 0 {
@@ -146,7 +131,7 @@ fn main() -> io::Result<()> {
             }
             if input == Event::Key(event::KeyCode::Down.into()) {
                 execute!(stdout, Clear(ClearType::All), cursor::MoveUp(n as u16)).unwrap();
-                if current_option < n as i32 {
+                if current_option < ((n as i32) - 1) {
                     current_option += 1;
                     continue
                 }
@@ -165,13 +150,8 @@ fn main() -> io::Result<()> {
         }
 
     }
-    
-
-    execute!(stdout, cursor::Show)?;
-    println!("Disabling Raw Mode\r");
-    stdout.flush().unwrap();
-    disable_raw_mode()
-
+    close(&mut stdout)?;
+    Ok(())
 }
 
 

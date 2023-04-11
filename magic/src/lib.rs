@@ -1,6 +1,6 @@
 use std::thread;
 use std::time::Duration;
-use std::io;
+use std::io::{ self, Write };
 
 use std::sync::mpsc;
 use std::sync::{ Arc, Mutex };
@@ -14,7 +14,6 @@ pub enum Choice {
     Next,
     Prev,
     Back,
-    Break,
     Other,
 }
 
@@ -62,59 +61,25 @@ pub struct Wing {
     pub habilities: Vec<String>,
 }
 
+pub fn read_up_or_down(stdout: &mut io::Stdout, input: &Event, current_option: i32, n: usize) -> Choice {
+    if input == &Event::Key(event::KeyCode::Up.into()) {
+        execute!(stdout, Clear(ClearType::All), cursor::MoveUp(n as u16)).unwrap();
+        if current_option > 0 {
+            return Choice::Prev
+        }
+    }
+    if input == &Event::Key(event::KeyCode::Down.into()) {
+        execute!(stdout, Clear(ClearType::All), cursor::MoveUp(n as u16)).unwrap();
+        if current_option < n as i32 {
+            return Choice::Next
+        }
+    }
+    Choice::Other
+}
+
 pub fn wait_a_sec() {
     thread::sleep(Duration::from_secs(1));
 }
-
-
-
-pub fn zone(zone: &Zone, selected_option: i32) -> Choice {
-    // zone takes care of calling the show option method on the zone, let's you choose the default
-    // option and takes a transmiter to send data.
-    let n = zone.options.len() + 1;
-    let max_option_range = zone.options.len() - 1;
-    let mut so = selected_option.clone();
-
-    loop {
-        // we pass the "selected option" to print the currently selected option
-        zone.show_options(so); 
-
-        // wait for key press
-        let event = event::read().unwrap();
-
-        if event == Event::Key(event::KeyCode::Up.into()) {
-            execute!(io::stdout(), Clear(ClearType::All), cursor::MoveUp(n as u16)).unwrap(); 
-            if so > 0 {
-                so -= 1;
-                continue
-            }
-        }
-
-        if event == Event::Key(event::KeyCode::Enter.into()) {
-            execute!(io::stdout(), Clear(ClearType::All), cursor::MoveUp(n as u16)).unwrap();
-            return Choice::Go
-        }
-
-        if event == Event::Key(event::KeyCode::Down.into()) {
-            execute!(io::stdout(), Clear(ClearType::All), cursor::MoveUp(n as u16)).unwrap();
-            if so < max_option_range as i32 {
-                so += 1;
-            }                     
-        }
-
-        if event == Event::Key(event::KeyCode::Esc.into()) {
-            // might add a pop up screen to confirm the exit
-            println!("Exiting the listen...");
-            wait_a_sec();
-            return Choice::Back
-        }
-
-            execute!(io::stdout(), Clear(ClearType::All), cursor::MoveUp(n as u16)).unwrap();
-        
-        
-    }
-}
-
 
 pub fn clean(stdout: &mut io::Stdout) {
     execute!(
@@ -133,6 +98,15 @@ pub fn take_inp() -> String {
 
     input2.trim().to_lowercase()
 }
+
+pub fn close(stdout: &mut io::Stdout) -> Result<(), io::Error> {
+    execute!(stdout, cursor::Show)?;
+    println!("Disabling Raw Mode\r");
+    io::stdout().flush()?;
+    crossterm::terminal::disable_raw_mode()?;
+    Ok(())
+}
+
 
 pub fn dragon_intro() {
 
