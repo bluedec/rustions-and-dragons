@@ -2,3 +2,5 @@ target/
 Cargo.lock
 magic/target/
 magic/Cargo.lock
+screens/target/
+screens/Cargo.lock

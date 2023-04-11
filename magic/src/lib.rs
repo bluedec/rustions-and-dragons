@@ -2,40 +2,14 @@ use std::thread;
 use std::time::Duration;
 use std::io::{ self, Write };
 
-use std::sync::mpsc;
-use std::sync::{ Arc, Mutex };
-
 use crossterm::event::Event;
 use crossterm::{ event, cursor, terminal, execute };
 use crossterm::terminal::{ Clear, ClearType };
 
-pub enum Choice {
-    Go,
-    Next,
-    Prev,
-    Back,
-    Other,
-}
-
-pub struct Zone<'a> {
-    pub title: &'a str,
-    pub options: Vec<&'static str>,
-}
-
-impl<'a> Zone<'a> {
-    pub fn show_options(&self, so: i32) {
-        println!(" {}\r", self.title);
-
-        for (i, option) in self.options.iter().enumerate() {
-            if i == so as usize {
-                println!("{} <\r", option)
-            } else {
-                println!("{}\r", option);
-
-            }
-        }
-
-    }
+pub enum UpDown {
+    Up,
+    Down,
+    Nil
 }
 
 pub struct Human {
@@ -61,50 +35,54 @@ pub struct Wing {
     pub habilities: Vec<String>,
 }
 
-pub fn read_up_or_down(stdout: &mut io::Stdout, input: &Event, current_option: i32, n: usize) -> Choice {
+pub fn read_up_down(input: &Event, current_option: i32, max: usize) -> UpDown {
     if input == &Event::Key(event::KeyCode::Up.into()) {
-        execute!(stdout, Clear(ClearType::All), cursor::MoveUp(n as u16)).unwrap();
+        clean();
         if current_option > 0 {
-            return Choice::Prev
+            return UpDown::Up 
         }
     }
     if input == &Event::Key(event::KeyCode::Down.into()) {
-        execute!(stdout, Clear(ClearType::All), cursor::MoveUp(n as u16)).unwrap();
-        if current_option < n as i32 {
-            return Choice::Next
+        clean();
+        if current_option < ((max as i32) - 1) {
+            return UpDown::Down 
         }
     }
-    Choice::Other
+    return UpDown::Nil 
 }
 
 pub fn wait_a_sec() {
     thread::sleep(Duration::from_secs(1));
 }
 
-pub fn clean(stdout: &mut io::Stdout) {
+pub fn clean() {
+    let mut stdout = io::stdout();
     execute!(
         stdout,
-        cursor::Hide,
-        cursor::MoveTo(0, 0),
         Clear(ClearType::All),
+        cursor::MoveTo(0, 0),
         ).unwrap();
 }
 
+
 pub fn take_inp() -> String {
-    let mut input2 = String::new();
+    let mut input = String::new();
     std::io::stdin()
-        .read_line(&mut input2)
+        .read_line(&mut input)
         .expect("Failed to read input.");
 
-    input2.trim().to_lowercase()
+    input.trim().to_lowercase()
 }
 
-pub fn close(stdout: &mut io::Stdout) -> Result<(), io::Error> {
+pub fn close() -> Result<(), io::Error> {
+    let mut stdout = io::stdout();
+    println!("Showing cursor\r");
     execute!(stdout, cursor::Show)?;
     println!("Disabling Raw Mode\r");
-    io::stdout().flush()?;
     crossterm::terminal::disable_raw_mode()?;
-    Ok(())
+    io::stdout().flush()?;
+    println!("Exiting..");
+    std::process::exit(999);
 }
 
 

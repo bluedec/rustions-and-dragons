@@ -1,5 +1,5 @@
 [package]
-name = "rustions_and_dragons"
+name = "screens"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,5 +7,4 @@ edition = "2021"
 
 [dependencies]
 crossterm = "0.26.1"
-magic = { path = "./magic/" }
-screens = { path = "./screens/" }
+magic = { path = "../magic" }
