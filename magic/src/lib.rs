@@ -14,19 +14,20 @@ pub enum UpDown {
 
 pub struct Human {
     pub name: String,
+    pub level: u16,
     pub health: i32,
     pub class: Class,
 }
 pub struct Class {
     pub name: String,
-    pub level: i32,
+    pub level: u16,
 }
 pub struct Weapon {
     pub name: String,
-    pub level: i32,  
+    pub level: u16,  
     pub damage: i32,
     pub class: Class,
-    pub min_lvl: i32, 
+    pub min_lvl: u16, 
 }
 
 pub struct Wing {
@@ -35,7 +36,19 @@ pub struct Wing {
     pub habilities: Vec<String>,
 }
 
-pub fn read_up_down(input: &Event, current_option: i32, max: usize) -> UpDown {
+
+pub fn show_options(options: &Vec<&'static str>, current_option: u16) {
+    for (i, option) in options.iter().enumerate() {
+        if i == current_option as usize {
+            println!("{} <\r", option)
+        } else {
+            println!("{}\r", option);
+        }
+    }
+
+}
+
+pub fn read_up_down(input: &Event, current_option: u16, max: u16) -> UpDown {
     if input == &Event::Key(event::KeyCode::Up.into()) {
         clean();
         if current_option > 0 {
@@ -44,15 +57,18 @@ pub fn read_up_down(input: &Event, current_option: i32, max: usize) -> UpDown {
     }
     if input == &Event::Key(event::KeyCode::Down.into()) {
         clean();
-        if current_option < ((max as i32) - 1) {
+        if current_option < (max - 1) {
             return UpDown::Down 
         }
     }
     return UpDown::Nil 
 }
 
-pub fn wait_a_sec() {
-    thread::sleep(Duration::from_secs(1));
+pub fn wait_a_sec(sec: u64) {
+    thread::sleep(Duration::from_secs(sec));
+}
+pub fn wait_a_milli(milli: u64) {
+    thread::sleep(Duration::from_millis(milli));
 }
 
 pub fn clean() {
@@ -60,6 +76,7 @@ pub fn clean() {
     execute!(
         stdout,
         Clear(ClearType::All),
+        cursor::Hide,
         cursor::MoveTo(0, 0),
         ).unwrap();
 }
@@ -71,7 +88,7 @@ pub fn take_inp() -> String {
         .read_line(&mut input)
         .expect("Failed to read input.");
 
-    input.trim().to_lowercase()
+    input.trim().to_string()
 }
 
 pub fn close() -> Result<(), io::Error> {

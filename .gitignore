@@ -1,6 +1,11 @@
+# targets and locks
 target/
 Cargo.lock
 magic/target/
 magic/Cargo.lock
 screens/target/
 screens/Cargo.lock
+
+# user files
+user_data.txt
+
