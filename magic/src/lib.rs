@@ -1,10 +1,11 @@
 use std::thread;
 use std::time::Duration;
 use std::io::{ self, Write };
+use std::sync::mpsc::Sender;
 
 use crossterm::event::Event;
 use crossterm::{ event, cursor, terminal, execute };
-use crossterm::terminal::{ Clear, ClearType };
+use crossterm::terminal::{ Clear, ClearType, enable_raw_mode };
 
 pub enum UpDown {
     Up,
@@ -18,10 +19,12 @@ pub struct Human {
     pub health: i32,
     pub class: Class,
 }
+
 pub struct Class {
     pub name: String,
     pub level: u16,
 }
+
 pub struct Weapon {
     pub name: String,
     pub level: u16,  
@@ -36,6 +39,58 @@ pub struct Wing {
     pub habilities: Vec<String>,
 }
 
+pub fn input_on_line(output: &str) -> String {
+    let mut current_option = 0;
+    let options = vec!["Return"]; 
+    let coordinates = (3, 30);
+    let max: u16 = options.len() as u16;
+    loop {
+        show_options_at(&options, current_option, coordinates);
+        let input = event::read().unwrap();
+        match read_up_down(&input, current_option, max) {
+            UpDown::Down => {
+                current_option += 1;
+                continue
+            },
+            UpDown::Up => {
+                current_option -= 1;
+                continue
+            },
+            UpDown::Nil => {},
+        };
+        if input == Event::Key(event::KeyCode::Enter.into()) {
+            if current_option == 0 {
+                break
+            }
+            if current_option == 1 {
+            }
+
+        }
+    }
+
+
+    let mut input = String::new();
+    let mut stdout = io::stdout();
+    execute!(stdout, cursor::MoveTo(0, 1)).unwrap();
+    println!("-------------------------------");
+    execute!(stdout, cursor::MoveTo(0, 0)).unwrap();
+
+
+
+    print!("{}: ", output);
+    io::stdout().flush().unwrap();
+    std::io::stdin()
+        .read_line(&mut input)
+        .expect("Failed to read input.");
+
+    input.trim().to_string()
+
+}
+
+pub fn simple_line_with_title(title: &str) {
+    println!("{title}\r");
+    println!("-------------------------------\r"); 
+}
 
 pub fn show_options(options: &Vec<&'static str>, current_option: u16) {
     for (i, option) in options.iter().enumerate() {
@@ -46,6 +101,9 @@ pub fn show_options(options: &Vec<&'static str>, current_option: u16) {
         }
     }
 
+}
+pub fn show_options_at(options: &Vec<&'static str>, current_option: u16, at: (u16, u16)) {
+    cursor::MoveTo(at.0, at.1);
 }
 
 pub fn read_up_down(input: &Event, current_option: u16, max: u16) -> UpDown {
@@ -79,6 +137,20 @@ pub fn clean() {
         cursor::Hide,
         cursor::MoveTo(0, 0),
         ).unwrap();
+}
+
+pub fn esc_listening_thread() {
+    std::thread::spawn(||{
+        loop {
+            wait_a_milli(50);
+            let press = event::read().unwrap();   
+            if press == event::Event::Key(event::KeyCode::Esc.into()) {
+                close().unwrap();
+            }
+
+        }
+    });
+
 }
 
 
