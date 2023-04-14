@@ -11,17 +11,38 @@ use crossterm::event::Event;
 use crossterm::event::{ KeyCode::{ Esc }};
 use crossterm::execute;
 use crossterm::terminal::{ disable_raw_mode, enable_raw_mode };
-use crossterm::cursor::{ Hide, Show };
+use crossterm::terminal::{ Clear, ClearType };
+use crossterm::cursor::{ self, Hide, Show };
 
 use magic;
 
 
 fn main() -> io::Result<()> {
     magic::clean();
+    execute!(
+        io::stdout(),
+        Clear(ClearType::All),
+    );
 
     enable_raw_mode()?;
-    // executes the loading bar. 
-    //screens::intro(&mut stdout)?;
+    std::thread::spawn(|| {
+        let mut counter = 0;
+        let mut quit = false;
+        while !quit {
+            let (width, height) = crossterm::terminal::size().unwrap();
+            magic::wait_a_sec(1);
+
+            counter += 1;
+            execute!(
+                io::stdout(),
+                cursor::SavePosition,
+                cursor::MoveTo(width - 20, height - 20),
+            );
+            println!("{}\r", counter);
+            execute!(io::stdout(), cursor::RestorePosition);
+        }
+    });
+    //screens::intro()?;
     magic::clean();
 
     screens::start_quit(); 
@@ -34,6 +55,7 @@ fn main() -> io::Result<()> {
     let mut flag = true;
     let mut player_name = String::new();
     while flag == true {
+        println!("{player_name}");
         player_name = screens::ask_name()?;
         if let Ok(false) = screens::confirm_name(&player_name) {
             continue
@@ -44,7 +66,8 @@ fn main() -> io::Result<()> {
     }
     println!("Name confirmed: {}\r", player_name);
     enable_raw_mode()?;
-
+    let mut stdout = io::stdout();
+    //screens::intro()?;
     magic::close()?;
     Ok(())
 }

@@ -1,11 +1,10 @@
 use std::thread;
 use std::time::Duration;
 use std::io::{ self, Write };
-use std::sync::mpsc::Sender;
 
 use crossterm::event::Event;
 use crossterm::{ event, cursor, terminal, execute };
-use crossterm::terminal::{ Clear, ClearType, enable_raw_mode };
+use crossterm::terminal::{ Clear, ClearType };
 
 pub enum UpDown {
     Up,
@@ -39,43 +38,39 @@ pub struct Wing {
     pub habilities: Vec<String>,
 }
 
+// todo
+pub fn show_text_slowly_at(coordinates: (u16, u16)) {
+
+}
+
+// NOTE: lines should be 24 digits long.
+pub fn line_at(coordinates: (u16, u16)) {
+    let mut stdout = io::stdout();
+    execute!(stdout, cursor::SavePosition, cursor::MoveTo(coordinates.0, coordinates.1)).unwrap();
+    println!("------------------------");
+    execute!(stdout, cursor::RestorePosition).unwrap();
+}
+
+
+pub fn print_at(text: &'static str, coordinates: (u16, u16)) {
+    execute!(io::stdout(), cursor::SavePosition, cursor::MoveTo(coordinates.0, coordinates.1)).unwrap();
+    println!("{text}\r");
+    execute!(io::stdout(), cursor::RestorePosition).unwrap();
+}
+
+
+pub fn title_and_line(title: &str) {
+    println!("{title}\r");
+    println!("------------------------\r"); 
+}
+
 pub fn input_on_line(output: &str) -> String {
-    let mut current_option = 0;
-    let options = vec!["Return"]; 
-    let coordinates = (3, 30);
-    let max: u16 = options.len() as u16;
-    loop {
-        show_options_at(&options, current_option, coordinates);
-        let input = event::read().unwrap();
-        match read_up_down(&input, current_option, max) {
-            UpDown::Down => {
-                current_option += 1;
-                continue
-            },
-            UpDown::Up => {
-                current_option -= 1;
-                continue
-            },
-            UpDown::Nil => {},
-        };
-        if input == Event::Key(event::KeyCode::Enter.into()) {
-            if current_option == 0 {
-                break
-            }
-            if current_option == 1 {
-            }
-
-        }
-    }
-
-
+    terminal::disable_raw_mode().expect("Disabling of raw mode failed.");
     let mut input = String::new();
     let mut stdout = io::stdout();
     execute!(stdout, cursor::MoveTo(0, 1)).unwrap();
-    println!("-------------------------------");
+    println!("------------------------");
     execute!(stdout, cursor::MoveTo(0, 0)).unwrap();
-
-
 
     print!("{}: ", output);
     io::stdout().flush().unwrap();
@@ -83,13 +78,9 @@ pub fn input_on_line(output: &str) -> String {
         .read_line(&mut input)
         .expect("Failed to read input.");
 
+    terminal::enable_raw_mode().expect("Enabling of raw mode failed.");
     input.trim().to_string()
 
-}
-
-pub fn simple_line_with_title(title: &str) {
-    println!("{title}\r");
-    println!("-------------------------------\r"); 
 }
 
 pub fn show_options(options: &Vec<&'static str>, current_option: u16) {
@@ -102,8 +93,18 @@ pub fn show_options(options: &Vec<&'static str>, current_option: u16) {
     }
 
 }
+
+
 pub fn show_options_at(options: &Vec<&'static str>, current_option: u16, at: (u16, u16)) {
-    cursor::MoveTo(at.0, at.1);
+    execute!(io::stdout(), cursor::MoveTo(at.0, at.1)).unwrap();
+    for (i, option) in options.iter().enumerate() {
+        if i == current_option as usize {
+            println!("{} <\r", option)
+        } else {
+            println!("{}\r", option);
+        }
+    }
+    execute!(io::stdout(), cursor::MoveTo(0, 1)).unwrap();
 }
 
 pub fn read_up_down(input: &Event, current_option: u16, max: u16) -> UpDown {
@@ -129,10 +130,22 @@ pub fn wait_a_milli(milli: u64) {
     thread::sleep(Duration::from_millis(milli));
 }
 
+pub fn clean_up_from(coordinates: (u16, u16)) {
+    let mut stdout = io::stdout();
+    execute!(
+        stdout,
+        cursor::MoveTo(coordinates.0, coordinates.1),
+        Clear(ClearType::FromCursorUp),
+        cursor::Hide,
+        cursor::MoveTo(0, 0),
+        ).unwrap();
+}
+
 pub fn clean() {
     let mut stdout = io::stdout();
     execute!(
         stdout,
+        cursor::MoveTo(40, 15),
         Clear(ClearType::All),
         cursor::Hide,
         cursor::MoveTo(0, 0),
