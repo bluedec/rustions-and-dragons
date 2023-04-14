@@ -17,51 +17,51 @@ pub fn intro() -> io::Result<()> {
     println!("\r");
 
 
-    std::thread::spawn(move || {
-        wait_a_milli(7285);
-        print!(" Click!\r");
+    let handle = std::thread::spawn(move || {
+        wait_a_milli(7230);
+        print!("Click!\r");
+        wait_a_sec(1);
         io::stdout().flush().expect("Failed flushing stdout.");
     });
 
-    let load = "[>-------------------------------<]".to_string();
+    let load = "[>----Tsmhrloz---cxz---Yerhjmw----<]".to_string();
     for char in load.chars() {
         print!("{}", char);
         io::stdout().flush()?;
-        magic::wait_a_milli(20);
+        magic::wait_a_milli(100);
     }
-
-    let mut loaded = String::with_capacity(load.len()); 
-    for c in load.chars() {
-        loaded.push(
-            if c == '-' { '.' } 
-            else if c == 'x' { '^' } 
-            else if c == 'B' { 'R' } 
-            else if c == 't' { 'r' } 
-            else if c == 'd' { 'u' } 
-            else if c == 'm' { 's' } 
-            else if c == 'l' { 't' } 
-            else if c == 'y' { 'e' } 
-            else if c == 'b' { 'o' } 
-            else if c == 's' { 'n' } 
-            else if c == 'f' { 's' } 
-            else if c == 'g' { 'a' } 
-            else if c == 'v' { 'n' } 
-            else if c == 'k' { 'D' } 
-            else if c == 'z' { 'r' } 
-            else if c == 's' { 'a' } 
-            else if c == 'w' { 'g' } 
-            else if c == 'p' { 'o' } 
-            else if c == 'q' { 'd' }  
-            else { c });
-        print!("\r{}", loaded);
+    let load = "[>....Rustions...and...Dragons....<] ".to_string();
+    execute!(io::stdout(), cursor::MoveTo(0, 1));
+    for char in load.chars() {
+        print!("{}", char);
         io::stdout().flush()?;
-        magic::wait_a_milli(150);
+        magic::wait_a_milli(100);
     }
-    magic::wait_a_milli(470);
+    handle.join();
+    magic::wait_a_milli(750);
     Ok(())
-
 }
 
+pub fn canvas(height: u16, width: u16) {
+    let one = std::thread::spawn(move || {
+        let mut w_counter = 0;
+        let mut h_counter = 0;
+        loop {
+            print!(".");
+            io::stdout().flush();
+            w_counter += 1;
+            if w_counter > width {
+                println!("\r");
+                w_counter = 0;
+                h_counter += 1;
+            }
+            if h_counter > height {
+                break
+            }
+        }
+    });
+    one.join();
+}
 pub fn boilerplate() {
     // each item represents a basic necessity for most menus, it's in order.
     // do options for menu
@@ -83,6 +83,7 @@ pub fn start_quit() {
     let options_len: u16 = options.len() as u16;
     loop {
         clean();
+        square(40, 80);
         println!("Rustions & Dragons\r");
         println!("------------------------\r");
 
@@ -122,6 +123,7 @@ pub fn new_run() {
     let max: u16 = options.len() as u16;
     loop {
         clean();
+        magic::square(40, 80);
         magic::title_and_line("");
         magic::show_options(&options, current_option);
 
@@ -155,6 +157,7 @@ pub fn choose_race() {
     let options_len: u16 = options.len() as u16;
     loop {
         clean();
+        magic::square(40, 80);
         magic::title_and_line(&"What are you?".to_string()); 
         magic::show_options(&options, current_option);
 
@@ -208,7 +211,8 @@ pub fn ask_name() -> io::Result<String> {
     let max: u16 = options.len() as u16;
     
     loop {
-    clean_up_from(from);
+        clean_up_from(from);
+        magic::square(40, 80);
         title_and_line("Give yourself a name, or one shall be given to you"); 
         show_options_at(&options, current_option, (0, 2));
          
@@ -246,9 +250,10 @@ pub fn confirm_name(player_name: &String) -> io::Result<bool> {
     let options = vec!["Yes I'm sure.", "Try again"];
     let max: u16 = options.len() as u16;
     let mut current_option = 0;
-    let title = format!("Are you sure about that? {}?\n\rI mean I don't really care but..  ", player_name); 
+    let title = format!("Are you sure about your choice?"); 
     loop {
         clean();
+        magic::square(40, 80);
         magic::title_and_line(&title);
         magic::show_options(&options, current_option);
 

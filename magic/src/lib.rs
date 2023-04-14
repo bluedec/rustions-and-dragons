@@ -5,6 +5,7 @@ use std::io::{ self, Write };
 use crossterm::event::Event;
 use crossterm::{ event, cursor, terminal, execute };
 use crossterm::terminal::{ Clear, ClearType };
+use crossterm::cursor::{ SavePosition, RestorePosition, MoveRight };
 
 pub enum UpDown {
     Up,
@@ -37,6 +38,75 @@ pub struct Wing {
     pub weight: usize,
     pub habilities: Vec<String>,
 }
+
+
+pub fn square_intro(height: u16, width: u16) {
+    for row in 0..width {
+        if row > 50 {
+            wait_a_milli(15);
+            print!("-");
+            io::stdout().flush();
+            
+        } else {
+            print!(" ");
+            continue
+        }
+    }
+    for col in 0..height {
+        wait_a_milli(15);
+        execute!(io::stdout(), cursor::MoveTo(width, col + 1));
+        println!("|");
+        io::stdout().flush();
+    }
+    for col in 0..height {
+    }
+    execute!(io::stdout(), cursor::MoveTo(0, 0));
+
+}
+pub fn square(height: u16, width: u16) {
+    for row in 0..width {
+        if row > 50 {
+            print!("-");
+            io::stdout().flush();
+            
+        } else {
+            print!(" ");
+            continue
+        }
+    }
+    for col in 0..height {
+        execute!(io::stdout(), cursor::MoveTo(width, col + 1));
+        println!("|");
+        io::stdout().flush();
+    }
+    for col in 0..height {
+    }
+    execute!(io::stdout(), cursor::MoveTo(0, 0));
+
+}
+
+pub fn intro2(height: u16, width: u16) {
+    let one = thread::spawn(move || {
+        let mut w_counter = 0;
+        let mut h_counter = 0;
+        loop {
+            wait_a_milli(1);
+            print!(".");
+            io::stdout().flush();
+            w_counter += 1;
+            if w_counter > width {
+                println!("\r");
+                w_counter = 0;
+                h_counter += 1;
+            }
+            if h_counter > height {
+                break
+            }
+        }
+    });
+    one.join();
+}
+
 
 // todo
 pub fn show_text_slowly_at(coordinates: (u16, u16)) {

@@ -6,6 +6,8 @@ use std::path::Path;
 use std::sync::mpsc;
 use std::sync::{ Arc, Mutex };
 
+use screens::canvas;
+
 use crossterm::event;
 use crossterm::event::Event;
 use crossterm::event::{ KeyCode::{ Esc }};
@@ -19,10 +21,7 @@ use magic;
 
 fn main() -> io::Result<()> {
     magic::clean();
-    execute!(
-        io::stdout(),
-        Clear(ClearType::All),
-    );
+    screens::intro();
 
     enable_raw_mode()?;
     std::thread::spawn(|| {
