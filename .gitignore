@@ -7,5 +7,6 @@ screens/target/
 screens/Cargo.lock
 
 # user files
-user_data.txt
+*.txt
+*.json
 

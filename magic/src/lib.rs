@@ -7,12 +7,16 @@ use crossterm::{ event, cursor, terminal, execute };
 use crossterm::terminal::{ Clear, ClearType, disable_raw_mode, enable_raw_mode };
 use crossterm::cursor::{ SavePosition, RestorePosition, MoveRight };
 
+use serde::{ Serialize, Deserialize };
+use serde_derive::*;
+
+
 pub enum UpDown {
     Up,
     Down,
     Nil
 }
-
+#[derive(Serialize, Deserialize)]
 pub struct Human {
     pub name: String,
     pub level: u16,
@@ -20,9 +24,10 @@ pub struct Human {
     pub class: Class,
 }
 
-pub struct Class {
-    pub name: String,
-    pub level: u16,
+#[derive(Serialize, Deserialize)]
+pub enum Class {
+    Ranger { level: u16 },
+    Warrior { level: u16 },
 }
 
 pub struct Weapon {
@@ -90,7 +95,6 @@ pub fn canvas_of_size_at(size: (u16, u16), coordinates: (u16, u16)) {
 
 pub fn canvas() {
     let (mut columns, mut rows) = crossterm::terminal::size().unwrap();
-
     columns -= 3;
     rows -= 3;
 
@@ -195,7 +199,7 @@ pub fn show_options_at(options: &Vec<&'static str>, current_option: u16, coordin
         move_to(col, row); 
         row += 1;
         if i == current_option as usize {
-            print!("{} <  ", option);
+            print!("{} <- ", option);
             stdout.flush().unwrap();
 
         } else {
