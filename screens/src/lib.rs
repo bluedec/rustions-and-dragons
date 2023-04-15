@@ -99,13 +99,13 @@ pub fn start_quit() {
 
 
 pub fn new_run() {
+    clean();
+    magic::canvas();
+    magic::title_and_line("");
     let options = vec![") New Run", ") Return"];
     let mut current_option = 0;
     let max: u16 = options.len() as u16;
     loop {
-        clean();
-        magic::canvas();
-        magic::title_and_line("");
         magic::show_options_at(&options, current_option, (4, 4));
 
         let input = event::read().unwrap();
@@ -133,15 +133,15 @@ pub fn new_run() {
 
 }
 pub fn choose_race() {
+    clean();
+    magic::canvas_of_size_at((15, 5), (4, 40));
+    magic::canvas_of_size_at((15, 5), (25, 35));
+    magic::canvas();
+    magic::canvas_of_size_at((15, 5), (65, 15));
     let options = vec![") Human", ") Blocked", ") Blocked", "\n) Return"];
     let mut current_option = 0;
     let options_len: u16 = options.len() as u16;
     loop {
-        clean();
-        magic::canvas_of_size_at((15, 5), (4, 40));
-        magic::canvas_of_size_at((15, 5), (25, 35));
-        magic::canvas();
-        magic::canvas_of_size_at((15, 5), (65, 15));
         magic::title_and_line(&"What are you?".to_string()); 
         magic::show_options_at(&options, current_option, (4, 4));
 
@@ -188,18 +188,17 @@ pub fn choose_race() {
 }
 pub fn ask_name() -> io::Result<String> {
     let from: (u16, u16) = (4, 60);
-    clean_up_from(from);
-
     let mut character_name = String::new();
+    clean_up_from(from);
+    magic::canvas();
 
+
+    title_and_line("Give yourself a name, or one shall be given to you"); 
     let options = vec![") I'll give me one", ") Choose a name for me", "\n) Return"];
     let mut current_option = 0;
     let max: u16 = options.len() as u16;
     
     loop {
-        clean_up_from(from);
-        magic::canvas();
-        title_and_line("Give yourself a name, or one shall be given to you"); 
         show_options_at(&options, current_option, (4, 4));
          
         let input = event::read().expect("Expected input.");
@@ -234,14 +233,13 @@ pub fn ask_name() -> io::Result<String> {
 }
 
 pub fn confirm_name() -> io::Result<bool> {
+    clean();
+    magic::canvas();
+    magic::title_and_line("Are you sure about your choice?");
     let options = vec!["Yes I'm sure.", "Try again"];
     let max: u16 = options.len() as u16;
     let mut current_option = 0;
-    let title = "Are you sure about your choice?"; 
     loop {
-        clean();
-        magic::canvas();
-        magic::title_and_line(&title);
         magic::show_options_at(&options, current_option, (4, 4));
 
         let input = event::read()?;
@@ -275,7 +273,6 @@ pub fn create_character() -> io::Result<String> {
     let mut player_name = String::new();
     let mut player_file: File;
     while quit == false {
-        println!("{player_name}");
         player_name = ask_name()?;
         let path_to_file = format!("{}.json", player_name);
         if let Ok(metadata) = fs::metadata(&path_to_file) {
