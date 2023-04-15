@@ -10,14 +10,12 @@ use crossterm::terminal::{ Clear, ClearType };
 #[allow(unused_imports)]
 use crossterm::cursor::{ Show, MoveRight };
 
-use magic::*;
+use magic::{*, canvas};
 
 pub fn intro() -> io::Result<()> {
     clean();
     println!("\r");
-
-
-    let handle = std::thread::spawn(move || {
+    std::thread::spawn(move || {
         wait_a_milli(7230);
         print!("Click!\r");
         wait_a_sec(1);
@@ -31,37 +29,16 @@ pub fn intro() -> io::Result<()> {
         magic::wait_a_milli(100);
     }
     let load = "[>....Rustions...and...Dragons....<] ".to_string();
-    execute!(io::stdout(), cursor::MoveTo(0, 1));
+    move_to(30, 15);
     for char in load.chars() {
         print!("{}", char);
         io::stdout().flush()?;
         magic::wait_a_milli(100);
     }
-    handle.join();
     magic::wait_a_milli(750);
     Ok(())
 }
 
-pub fn canvas(height: u16, width: u16) {
-    let one = std::thread::spawn(move || {
-        let mut w_counter = 0;
-        let mut h_counter = 0;
-        loop {
-            print!(".");
-            io::stdout().flush();
-            w_counter += 1;
-            if w_counter > width {
-                println!("\r");
-                w_counter = 0;
-                h_counter += 1;
-            }
-            if h_counter > height {
-                break
-            }
-        }
-    });
-    one.join();
-}
 pub fn boilerplate() {
     // each item represents a basic necessity for most menus, it's in order.
     // do options for menu
@@ -69,7 +46,7 @@ pub fn boilerplate() {
     // max value of the current_position (options.len() - 1)
     // coordinates if using show_options_at()
     // loop {
-    // magic::show_options(&options, default_position)
+    // magic::show_options_at(&options, default_position)
     // magic::show_options_at(&options, default_position, coordinates)
     // handle events
     // }
@@ -82,12 +59,14 @@ pub fn start_quit() {
     let options = vec![") Start", ") Quit"];
     let options_len: u16 = options.len() as u16;
     loop {
+        let cs = (26, 26);
+        let coordinates = (38, 16);
         clean();
-        square(40, 80);
-        println!("Rustions & Dragons\r");
-        println!("------------------------\r");
-
-        magic::show_options(&options, current_option);
+        magic::canvas();
+        title_and_line("Rusteons & Dragons");
+        canvas_of_size_at(cs, coordinates);
+        
+        magic::show_options_at(&options, current_option, (4, 4));
 
         let input = event::read().unwrap();
 
@@ -123,9 +102,9 @@ pub fn new_run() {
     let max: u16 = options.len() as u16;
     loop {
         clean();
-        magic::square(40, 80);
+        magic::canvas();
         magic::title_and_line("");
-        magic::show_options(&options, current_option);
+        magic::show_options_at(&options, current_option, (4, 4));
 
         let input = event::read().unwrap();
         match read_up_down(&input, current_option, max) {
@@ -157,9 +136,9 @@ pub fn choose_race() {
     let options_len: u16 = options.len() as u16;
     loop {
         clean();
-        magic::square(40, 80);
+        magic::canvas();
         magic::title_and_line(&"What are you?".to_string()); 
-        magic::show_options(&options, current_option);
+        magic::show_options_at(&options, current_option, (4, 4));
 
         let input = event::read().unwrap();
 
@@ -212,9 +191,9 @@ pub fn ask_name() -> io::Result<String> {
     
     loop {
         clean_up_from(from);
-        magic::square(40, 80);
+        magic::canvas();
         title_and_line("Give yourself a name, or one shall be given to you"); 
-        show_options_at(&options, current_option, (0, 2));
+        show_options_at(&options, current_option, (4, 4));
          
         let input = event::read().expect("Expected input.");
         match magic::read_up_down(&input, current_option, max) {
@@ -231,7 +210,8 @@ pub fn ask_name() -> io::Result<String> {
         if input == Event::Key(KeyCode::Enter.into()) {
             if current_option == 0 {
                 clean();
-                character_name = input_on_line("Give yourself a name");
+                canvas();
+                character_name = input_on_line_at("Give yourself a name", (4, 4));
                 return Ok(character_name)
 
             }
@@ -253,9 +233,9 @@ pub fn confirm_name(player_name: &String) -> io::Result<bool> {
     let title = format!("Are you sure about your choice?"); 
     loop {
         clean();
-        magic::square(40, 80);
+        magic::canvas();
         magic::title_and_line(&title);
-        magic::show_options(&options, current_option);
+        magic::show_options_at(&options, current_option, (4, 4));
 
         let input = event::read()?;
         match magic::read_up_down(&input, current_option, max) {

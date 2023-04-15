@@ -4,7 +4,7 @@ use std::io::{ self, Write };
 
 use crossterm::event::Event;
 use crossterm::{ event, cursor, terminal, execute };
-use crossterm::terminal::{ Clear, ClearType };
+use crossterm::terminal::{ Clear, ClearType, disable_raw_mode, enable_raw_mode };
 use crossterm::cursor::{ SavePosition, RestorePosition, MoveRight };
 
 pub enum UpDown {
@@ -39,53 +39,80 @@ pub struct Wing {
     pub habilities: Vec<String>,
 }
 
-
-pub fn square_intro(height: u16, width: u16) {
-    for row in 0..width {
-        if row > 50 {
-            wait_a_milli(15);
-            print!("-");
-            io::stdout().flush();
-            
-        } else {
-            print!(" ");
-            continue
-        }
-    }
-    for col in 0..height {
-        wait_a_milli(15);
-        execute!(io::stdout(), cursor::MoveTo(width, col + 1));
-        println!("|");
-        io::stdout().flush();
-    }
-    for col in 0..height {
-    }
-    execute!(io::stdout(), cursor::MoveTo(0, 0));
-
-}
-pub fn square(height: u16, width: u16) {
-    for row in 0..width {
-        if row > 50 {
-            print!("-");
-            io::stdout().flush();
-            
-        } else {
-            print!(" ");
-            continue
-        }
-    }
-    for col in 0..height {
-        execute!(io::stdout(), cursor::MoveTo(width, col + 1));
-        println!("|");
-        io::stdout().flush();
-    }
-    for col in 0..height {
-    }
-    execute!(io::stdout(), cursor::MoveTo(0, 0));
-
+pub fn move_to(x: u16, y: u16) {
+    execute!(io::stdout(), cursor::MoveTo(x, y)).unwrap();
 }
 
-pub fn intro2(height: u16, width: u16) {
+
+pub fn canvas_of_size_at(size: (u16, u16), coordinates: (u16, u16)) {
+    let mut x = coordinates.0;
+    let mut y = coordinates.1;
+    let columns = size.0;
+    let rows = size.1;
+    let mut stdout = io::stdout();
+
+    move_to(x, y);
+    print!(" ");
+    stdout.flush().unwrap();
+    for _ in 0..columns {
+        x += 1;
+        move_to(x, y);
+        print!("_");
+    }
+    x += 1;
+    stdout.flush();
+    for r in 0..rows {
+        y += 1;
+        move_to(x, y);
+        print!("|");
+    }
+    y += 1;
+    move_to(x, y);
+    print!("°");
+    stdout.flush();
+    for _ in 0..columns {
+        x -= 1;
+        move_to(x, y);
+        print!("-");
+    }
+    x -= 1;
+    move_to(x, y);
+    print!("°");
+    stdout.flush();
+    move_to(x, y);
+    for _ in 0..rows {
+        y -= 1;
+        move_to(x, y);
+        print!("|")
+    }
+    move_to(0, 0);
+}
+
+pub fn canvas() {
+    let (mut columns, mut rows) = crossterm::terminal::size().unwrap();
+
+    columns -= 3;
+    rows -= 3;
+
+    print!(" ");
+    for _ in 0..columns {
+        print!("_");
+    }
+    print!("  ");
+    for r in 0..rows {
+        print!("|\n\r");
+        move_to(columns + 1, r + 1);
+        print!("|\n\r");
+        
+    }
+    print!("°");
+    for _ in 0..columns {
+        print!("-");
+    }
+    print!("°");
+}
+
+pub fn intro2(columns: u16, rows: u16) {
     let one = thread::spawn(move || {
         let mut w_counter = 0;
         let mut h_counter = 0;
@@ -94,12 +121,12 @@ pub fn intro2(height: u16, width: u16) {
             print!(".");
             io::stdout().flush();
             w_counter += 1;
-            if w_counter > width {
+            if w_counter > rows {
                 println!("\r");
                 w_counter = 0;
                 h_counter += 1;
             }
-            if h_counter > height {
+            if h_counter > columns {
                 break
             }
         }
@@ -130,51 +157,53 @@ pub fn print_at(text: &'static str, coordinates: (u16, u16)) {
 
 
 pub fn title_and_line(title: &str) {
+    move_to(2, 2);
     println!("{title}\r");
+    move_to(2, 3);
     println!("------------------------\r"); 
 }
 
-pub fn input_on_line(output: &str) -> String {
-    terminal::disable_raw_mode().expect("Disabling of raw mode failed.");
+pub fn input_on_line_at(output: &str, coordinates: (u16, u16)) -> String {
+    let col = coordinates.0;
+    let row = coordinates.1;
     let mut input = String::new();
     let mut stdout = io::stdout();
-    execute!(stdout, cursor::MoveTo(0, 1)).unwrap();
-    println!("------------------------");
-    execute!(stdout, cursor::MoveTo(0, 0)).unwrap();
 
+    // we disable raw mode to allow input.
+    terminal::disable_raw_mode().expect("Disabling of raw mode failed.");
+    execute!(stdout, crossterm::cursor::Show).unwrap();
+    move_to(col, row - 1);
+    println!("------------------------");
+    move_to(col, row);
     print!("{}: ", output);
     io::stdout().flush().unwrap();
     std::io::stdin()
         .read_line(&mut input)
         .expect("Failed to read input.");
 
+    // enable it back
     terminal::enable_raw_mode().expect("Enabling of raw mode failed.");
     input.trim().to_string()
 
 }
 
-pub fn show_options(options: &Vec<&'static str>, current_option: u16) {
+pub fn show_options_at(options: &Vec<&'static str>, current_option: u16, coordinates: (u16, u16)) {
+    let mut col = coordinates.0;
+    let mut row = coordinates.1;
+    let mut stdout = io::stdout();
     for (i, option) in options.iter().enumerate() {
+        move_to(col, row); 
+        row += 1;
         if i == current_option as usize {
-            println!("{} <\r", option)
+            print!("{} <  ", option);
+            stdout.flush().unwrap();
+
         } else {
-            println!("{}\r", option);
+            print!("{} ", option);
+            stdout.flush().unwrap();
         }
     }
 
-}
-
-
-pub fn show_options_at(options: &Vec<&'static str>, current_option: u16, at: (u16, u16)) {
-    execute!(io::stdout(), cursor::MoveTo(at.0, at.1)).unwrap();
-    for (i, option) in options.iter().enumerate() {
-        if i == current_option as usize {
-            println!("{} <\r", option)
-        } else {
-            println!("{}\r", option);
-        }
-    }
-    execute!(io::stdout(), cursor::MoveTo(0, 1)).unwrap();
 }
 
 pub fn read_up_down(input: &Event, current_option: u16, max: u16) -> UpDown {
@@ -202,9 +231,11 @@ pub fn wait_a_milli(milli: u64) {
 
 pub fn clean_up_from(coordinates: (u16, u16)) {
     let mut stdout = io::stdout();
+    let col = coordinates.0;
+    let row = coordinates.1;
     execute!(
         stdout,
-        cursor::MoveTo(coordinates.0, coordinates.1),
+        cursor::MoveTo(col, row),
         Clear(ClearType::FromCursorUp),
         cursor::Hide,
         cursor::MoveTo(0, 0),

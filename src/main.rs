@@ -6,7 +6,6 @@ use std::path::Path;
 use std::sync::mpsc;
 use std::sync::{ Arc, Mutex };
 
-use screens::canvas;
 
 use crossterm::event;
 use crossterm::event::Event;
@@ -16,34 +15,20 @@ use crossterm::terminal::{ disable_raw_mode, enable_raw_mode };
 use crossterm::terminal::{ Clear, ClearType };
 use crossterm::cursor::{ self, Hide, Show };
 
-use magic;
+use magic::{self, wait_a_sec, move_to, canvas_of_size_at};
 
 
 fn main() -> io::Result<()> {
     magic::clean();
-    screens::intro();
-
     enable_raw_mode()?;
-    std::thread::spawn(|| {
-        let mut counter = 0;
-        let mut quit = false;
-        while !quit {
-            let (width, height) = crossterm::terminal::size().unwrap();
-            magic::wait_a_sec(1);
-
-            counter += 1;
-            execute!(
-                io::stdout(),
-                cursor::SavePosition,
-                cursor::MoveTo(width - 20, height - 20),
-            );
-            println!("{}\r", counter);
-            execute!(io::stdout(), cursor::RestorePosition);
-        }
-    });
     //screens::intro()?;
-    magic::clean();
 
+    magic::clean();
+    let cs = (46, 8);
+    let coordinates = (28, 6);
+    canvas_of_size_at(cs, coordinates);
+
+    wait_a_sec(1);
     screens::start_quit(); 
     screens::new_run();
     screens::choose_race();
