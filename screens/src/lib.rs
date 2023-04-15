@@ -56,17 +56,17 @@ pub fn boilerplate() {
 }
 
 pub fn start_quit() {
+    clean();
+    let cs = (26, 26);
+    let coordinates = (38, 16);
+    canvas_of_size_at(cs, coordinates);
+    magic::canvas();
     let mut stdout = io::stdout();
     let mut current_option = 0;
     let options = vec![") Start", ") Quit"];
     let options_len: u16 = options.len() as u16;
     loop {
-        let cs = (26, 26);
-        let coordinates = (38, 16);
-        clean();
-        magic::canvas();
         title_and_line("Rusteons & Dragons");
-        canvas_of_size_at(cs, coordinates);
         
         magic::show_options_at(&options, current_option, (4, 4));
 

@@ -203,7 +203,7 @@ pub fn show_options_at(options: &Vec<&'static str>, current_option: u16, coordin
             stdout.flush().unwrap();
 
         } else {
-            print!("{} ", option);
+            print!("{}   ", option);
             stdout.flush().unwrap();
         }
     }
@@ -212,13 +212,11 @@ pub fn show_options_at(options: &Vec<&'static str>, current_option: u16, coordin
 
 pub fn read_up_down(input: &Event, current_option: u16, max: u16) -> UpDown {
     if input == &Event::Key(event::KeyCode::Up.into()) {
-        clean();
         if current_option > 0 {
             return UpDown::Up 
         }
     }
     if input == &Event::Key(event::KeyCode::Down.into()) {
-        clean();
         if current_option < (max - 1) {
             return UpDown::Down 
         }

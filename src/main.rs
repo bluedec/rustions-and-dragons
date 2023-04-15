@@ -36,8 +36,8 @@ fn main() -> io::Result<()> {
     let player_name = screens::create_character()?;
     // else { just continue with area where he left
 
-    let formatted = format!("{}.json", &player_name);
-    let mut file = File::open(formatted).expect("1");
+    let player_file_name = format!("{}.json", &player_name);
+    let mut file = File::open(player_file_name).expect("1");
     let mut contents = String::new();
     file.read_to_string(&mut contents).expect("2");
     println!("{}", contents);
